@@ -4,7 +4,7 @@ from collections import deque
 import time
 
 class CellSimulation:
-    def __init__(self, grid_size=4, time_steps=10, death_rate=0.5, percent_a=0.3, plot_steps=False, clump_size_A=25, num_clumps_A=1, repop="majority"):
+    def __init__(self, grid_size=30, time_steps=500, death_rate=0.5, percent_a=0.3, plot_steps=False, clump_size_A=10, num_clumps_A=4, repop="majority"):
         self.grid_size = grid_size
         self.time_steps = time_steps
         self.death_rate = death_rate
@@ -40,21 +40,33 @@ class CellSimulation:
 
         cell_type = "A"
         for _ in range(self._num_clumps_A):
-            start_i = np.random.randint(0, self.grid_size)
-            start_j = np.random.randint(0, self.grid_size)
+            # Ensure we find a suitable starting point
+            attempts = 0
+            while attempts < 100:
+                start_i = np.random.randint(0, self.grid_size)
+                start_j = np.random.randint(0, self.grid_size)
 
-            queue = deque([(start_i, start_j)])
-            visited = set(queue)
-            self.grid[start_i, start_j] = cell_type
+                # Check if the starting point is not already part of a clump
+                if self.grid[start_i, start_j] != cell_type:
+                    queue = deque([(start_i, start_j)])
+                    visited = set(queue)
+                    self.grid[start_i, start_j] = cell_type
 
-            while queue and len(visited) < self._clump_size_A:
-                i, j = queue.popleft()
+                    while queue and len(visited) < self._clump_size_A:
+                        i, j = queue.popleft()
 
-                for ni, nj in get_neighbors(i, j):
-                    if (ni, nj) not in visited:
-                        self.grid[ni, nj] = cell_type
-                        visited.add((ni, nj))
-                        queue.append((ni, nj))
+                        for ni, nj in get_neighbors(i, j):
+                            if (ni, nj) not in visited and self.grid[ni, nj] != cell_type:
+                                self.grid[ni, nj] = cell_type
+                                visited.add((ni, nj))
+                                queue.append((ni, nj))
+                    
+                    # Successfully created a clump
+                    break
+            
+            attempts += 1
+    
+
 
     def plot_grid(self, grid, t, output_folder):
         pass  # Implement in subclasses
@@ -133,6 +145,8 @@ class CellSimulation:
             timestamp = time.strftime("%Y%m%d-%H%M%S")
             output_folder = f"{output_folder}_{timestamp}"
             os.makedirs(output_folder, exist_ok=True)
+        
+        self.add_clumps()
 
         for t in range(self.time_steps):
             if self.plot_steps and (t < 10 or t % 100 == 0):
