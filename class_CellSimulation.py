@@ -5,6 +5,12 @@ import time
 
 class CellSimulation:
     def __init__(self, grid_size=30, time_steps=500, death_rate=0.5, percent_a=0.3, plot_steps=False, clump_size_A=10, num_clumps_A=4, repop="majority"):
+        if not 0 <= death_rate <= 1 or not 0 <= percent_a <= 1:
+            raise ValueError("death_rate and percent_a must be between 0 and 1")
+        if grid_size <= 0 or time_steps <= 0:
+            raise ValueError("grid_size and time_steps must be positive")
+        
+        
         self.grid_size = grid_size
         self.time_steps = time_steps
         self.death_rate = death_rate
@@ -64,7 +70,7 @@ class CellSimulation:
                     # Successfully created a clump
                     break
             
-            attempts += 1
+                attempts += 1
     
 
 
@@ -93,7 +99,6 @@ class CellSimulation:
             i, j = a_c_indices[idx]
             self.grid[i, j] = "B"
 
-    #TODO: add more ways to repopulate, will be specific to each cell type 
     def repopulate_cells(self):            
         new_grid = self.grid.copy()
 
